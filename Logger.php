@@ -6,4 +6,9 @@ class Logger
     {
         echo "$message: $info<br>";
     }
+
+    public static function hr()
+    {
+        echo "<hr>";
+    }
 }
