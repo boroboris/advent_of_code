@@ -32,7 +32,7 @@ foreach ($test_cases as $test) {
 
     while(!empty($matches)) {
         $matches = [];
-        $group = "/{.*?}/g";
+        $group = "/{.*?}/";
         $match = preg_match($group, $test, $matches);
         var_dump($group, $counter, $matches);
 

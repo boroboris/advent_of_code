@@ -103,10 +103,9 @@ $skip_size = 0;
 $original_input = "1,2,3";
 $original_chars = str_split($original_input);
 
-$list = array_map('ord', $original_chars);
-$list = array_merge($list, [17, 31, 73, 47, 23]);
-var_dump($list);
-$lengths = [17, 31, 73, 47, 23];
+$lengths = array_map('ord', $original_chars);
+$lengths = array_merge($lengths, [17, 31, 73, 47, 23]);
+var_dump($lengths);
 $list_length = count($list) - 1;
 $rounds = range(0,1);
 
@@ -115,9 +114,10 @@ foreach ($rounds as $round) {
     runHashRound($lengths, $current_position, $skip_size, $list_length, $list);
     warnIfListTooBig($list, $list_length, $skip_size);
 
-    var_dump($list);
-    var_dump($current_position);
-    var_dump($skip_size);
+    var_dump($lengths);
+//    var_dump($list);
+//    var_dump($current_position);
+//    var_dump($skip_size);
 }
 
 var_dump($list);
