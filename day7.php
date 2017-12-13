@@ -1651,18 +1651,6 @@ function countNames($child, &$names_count)
     $names_count[$child]++;
 }
 
-//function findRootNode($programs, $root_name)
-//{
-//    $root_offset = 0;
-//    foreach ($programs as $key => $program) {
-//        if ($program->name == $root_name) {
-//            $root_node = $program;
-//            $root_offset = $key + 1;
-//        }
-//    }
-//    return array($root_node, $root_offset);
-//}
-
 function initPrograms($part1_string)
 {
     $programs = [];
@@ -1674,7 +1662,7 @@ function initPrograms($part1_string)
     $number_of_programs = count($matches[1]);
     for ($i = 0; $i < $number_of_programs; $i++) {
         $name = $matches[1][$i];
-        $weight = $matches[2][$i];
+        $weight = (int) $matches[2][$i];
         $names = !empty($matches[4][$i]) ? explode(",", $matches[4][$i]) : [];
 
         $programs[$name] = new Program($name, $weight, $names);
@@ -1687,19 +1675,52 @@ function initPrograms($part1_string)
     return $programs;
 }
 
-//function constructTree(&$orphan_programs, &$program) {
-//    $children = $program->children;
-//
-//    foreach ($children as $key => $child) {
-//        if(is_string($child)) {
-//            $program->children[$key] = $orphan_programs[$child];
-//            unset($orphan_programs[$child]);
-//        }
-//    }
-//
-//    var_dump($program);
-//}
-//
+function constructTree(&$orphan_programs, $program) {
+    if(empty($program->children)) {
+        return $program;
+    }
+
+    $children = [];
+
+    while(!empty($program->children)) {
+        $child = array_pop($program->children);
+
+        $children[$child] = $orphan_programs[$child];
+        $children[$child] = constructTree($orphan_programs, $children[$child]);
+    }
+
+    $program->children = $children;
+
+    return $program;
+}
+
+function calculateWeights($program) {
+    if(count($program->children) == 0) {
+        return $program->weight;
+    }
+
+    $weight = $program->weight;
+    foreach ($program->children as $child) {
+        $weight += calculateWeights($child);
+    }
+
+    return $weight;
+}
+
+function findProblematicChild($program, &$parent_weights) {
+    if(count($program->children) == 0) {
+        return $program->weight;
+    }
+
+    foreach ($program->children as $child) {
+        $parent_weights[$child->name] = findProblematicChild($child, $parent_weights);
+    }
+
+    return $program->weight;
+}
+
+/*-----------------------------------*/
+
 $programs = initPrograms($part1_string);
 
 $programs_count = [];
@@ -1712,30 +1733,47 @@ foreach ($programs as $key => $program) {
     $children = $program->children;
     if(count($children) > 0) {
         foreach ($children as $child) {
-            if(!key_exists($child, $programs_count)) {
-                var_dump($child);
-            }
             unset($programs_count[$child]);
         }
     }
 }
 
 $root_node_name = array_search(min($programs_count), $programs_count);
-Logger::outputLine('(prt 1) root node', $root_node_name);
+Logger::outputLine('(part 1) root node', $root_node_name);
 Logger::hr();
 
 
-//
-//$orphan_programs = $programs;
-//while (count($orphan_programs) > 1) {
-//    $program = array_pop($orphan_programs);
-//
-//    if(!empty($children)) {
-//        var_dump($program);
-//        constructTree($orphan_programs, $program);
-//    }
-//
-//    array_merge([$program->name => $program], $orphan_programs);
-//}
-//
-//var_dump($orphan_programs);
+$orphan_programs = $programs;
+$root_node = $orphan_programs[$root_node_name];
+unset($orphan_programs[$root_node_name]);
+
+
+$root_node = constructTree($orphan_programs, $root_node);
+$children_weights = [];
+
+foreach ($root_node->children as $child) {
+    $children_weights[$child->name] = calculateWeights($child);
+}
+
+var_dump($children_weights);
+
+$max = max($children_weights);
+$difference = $max - min($children_weights);
+$problematic_child = array_search($max, $children_weights);
+
+var_dump($difference);
+
+$parent_weights = [];
+$problematic_disk = $root_node->children[$problematic_child];
+
+$weight = findProblematicChild($problematic_disk, $parent_weights);
+$parent_weights[$problematic_disk->name] = $weight;
+
+
+var_dump($parent_weights);
+$disk_weights = array_count_values($parent_weights);
+
+var_dump($disk_weights);
+$solution_disk_value = array_search(min($disk_weights), $disk_weights);
+Logger::outputLine('solution before', $solution_disk_value);
+Logger::outputLine('solution', $solution_disk_value - $difference);
