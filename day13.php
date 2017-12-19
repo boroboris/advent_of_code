@@ -55,11 +55,16 @@ function initFirewall($test_input)
 {
     $firewall = [];
     $matches = [];
+//    $possibilities = 1;
+    $lengths_for_lcm = [];
 
     preg_match_all('/(\d+):\s(\d+)/', $test_input, $matches);
     for ($i = 0; $i < count($matches[1]); $i++) {
         $i1 = (int)$matches[1][$i];
         $i2 = (int)$matches[2][$i];
+//        $possibilities *= $i2;
+//        var_dump($possibilities);
+//        $lengths_for_lcm[] = $i2;
         $firewall[$i1] = array_fill(0, $i2, 0);
     }
 
@@ -74,7 +79,9 @@ function initFirewall($test_input)
 
     ksort($firewall);
 
-    return $firewall;
+//    Logger::outputLine('number of possibilities', $possibilities);
+
+    return [$firewall, $lengths_for_lcm];
 }
 
 function moveScanner(&$depth) {
@@ -112,10 +119,18 @@ function moveScanner(&$depth) {
     }
 }
 
+function gcd($a,$b) {
+    return ($a % $b) ? gcd($b,$a % $b) : $b;
+}
+
+function lcm($a, $b) {
+    return abs($a * $b)/gcd($a, $b);
+}
+
 /* ---------------------------------------------- */
 
-$firewall = initFirewall($real_input);
-var_dump($firewall);
+list($firewall, $lengths_for_lcm) = initFirewall($real_input);
+//var_dump($firewall);
 Logger::hr();
 
 $down = 1;
@@ -129,25 +144,64 @@ foreach ($firewall as &$depth) {
 }
 
 $my_location = 0;
-$severity = 0;
-while($my_location < count($firewall)) {
-//    Logger::outputLine('my location', $my_location);
-//    var_dump($firewall);
+$severity = 1;
+$delay = 0;
 
-    if($firewall[$my_location][0] > 0) {
-//        Logger::outputLine('location, depth', "$my_location, " . count($firewall[$my_location]));
-        $severity += $my_location * count($firewall[$my_location]);
-    }
-
+function moveScanners(&$firewall)
+{
     foreach ($firewall as &$depth) {
-        if(!empty($depth)) {
+        if (!empty($depth)) {
             moveScanner($depth);
         }
     }
-
-    $my_location++;
-//    Logger::hr();
 }
 
+while ($severity > 0) {
+    $severity = 0;
+    $my_location = 0;
 
-Logger::outputLine('soulution 1', $severity);
+    while($my_location < count($firewall)) {
+
+        if($firewall[$my_location][0] > 0) {
+            $multiplier = $my_location != 0 ? $my_location : 1;
+            $severity += $multiplier * count($firewall[$my_location]);
+
+//            Logger::outputLine('failed at', $my_location);
+//            Logger::outputLine('delay', $delay);
+        }
+
+        moveScanners($firewall);
+        $my_location++;
+    }
+
+    if($delay == 0) {
+        Logger::outputLine('soulution 1', $severity);
+        Logger::hr();
+    }
+
+    $delay++;
+}
+//
+//$lengths_for_lcm = [];
+//foreach ($firewall as $depth) {
+//    $lengths_for_lcm[] = count($depth);
+//}
+//
+//var_dump($lengths_for_lcm);
+//$delay = $lengths_for_lcm[0];
+//array_shift($delay);
+//foreach ($lengths_for_lcm as $key => $number) {
+//    $delay = lcm($delay, $number + $key);
+//    var_dump($delay, $key);
+//}
+Logger::outputLine('solution 2', $delay - 1);
+
+// 1/6 * 0 + 1/2 * 1 + 1*2 + 1*3 + 1/8 * 4 + 1 * 5 + 1/8 * 6
+
+// ne prolazim 0 -> 0,5,9
+// ne prolazim 1 -> 1,4,6,8,10 (0,3,5,7,9)
+// ne prolazim 2 -> null
+// ne prolazim 3 -> null
+// ne prolazim 4 -> 4,11,17 (0,7,13)
+// ne prolazim 5 -> null
+// ne prolazim 6 -> 6,13,19 (0,7,13)
