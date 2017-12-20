@@ -11,4 +11,9 @@ class Logger
     {
         echo "<hr>";
     }
+
+    public static function error($message, $info)
+    {
+        echo "<strong>ERROR:</strong> $message: $info<br>";
+    }
 }

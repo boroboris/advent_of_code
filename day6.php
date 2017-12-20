@@ -2,200 +2,95 @@
 
 include 'Logger.php';
 
-// store state
-// find max
-// redistribute it around
-// repeat
-//function repeatingState1($states, $needle)
-//{
-//    $values_count = array_count_values($states);
-//
-//    var_dump($values_count);
-//
-////    $first = array_search($number_of_repeats, $values_count) !== false;
-////    $second = $values_count['1098765431101514131112'] == 2;
-//
-//    $repeated = $values_count[$needle] > 1;
-//
-//    if($repeated == true) {
-//        var_dump($values_count);
-//    }
-//
-//    return $repeated;
-//}
+//$input = [0,2,7,0];
+$input =  array_map('intval',preg_split("/\s+/", "0	5	10	0	11	14	13	4	11	8	8	7	1	4	12	11"));
 
-function repeatingState($states, $number_of_repeats)
-{
-    $values_count = array_count_values($states);
+$length = count($input);
+$states_count = [];
+$the_state = [];
 
-    $repeating_states = array_search($number_of_repeats, $values_count) !== false;
+while(true) {
+    $max = max($input);
+    $max_location = array_search($max, $input);
+    $input[$max_location] = 0;
 
-    if($repeating_states) {
-       print_r($values_count);
-    }
+    $redistribute_to_some = $max%$length;
+    $redistribute_to_all = floor($max/$length);
 
-    return $repeating_states;
-//    $second = $values_count['1098765431101514131112'] == 2;
+    $redistribution = array_fill(0,$length,$redistribute_to_all);
 
-//    $repeated = $values_count[$needle] > 1;
-//
-//    if($repeated == true) {
-//        var_dump($values_count);
-//    }
-//
-//    return $repeated;
-}
+    $i = $max_location >= $length - 1 ? 0 : ($max_location + 1);
+    for(; $i < $length; $i++) {
+        if($redistribution[$i] <= 0 && $redistribute_to_some <=0) {
+            break;
+        }
 
-function findStates1($memory_bank, $repeat_count)
-{
-    $states = [];
-
-    var_dump($memory_bank);
-
-    while (!repeatingState($states, $repeat_count)) {
-        $state = implode("", $memory_bank);
-        $states[] = $state;
-
-//        $i = array_search(max($memory_bank), $memory_bank);
-//        $redistribute = $memory_bank[$i];
-//        $memory_bank[$i] = 0;
-//
-//        $i++; //begin with next
-//        while ($redistribute > 0) {
-//            if ($i > count($memory_bank) - 1) {
-//                $i = 0;
-//            }
-//
-//            $memory_bank[$i]++;
-//            $redistribute--;
-//            $i++;
-//        }
-
-        $i = array_search(max($memory_bank), $memory_bank);
-        $redistribute = $memory_bank[$i];
-        $memory_bank[$i] = 0;
-        $memory_length = count($memory_bank);
-
-        $redistribute_to_all = $redistribute / $memory_length >= 1 ? round($redistribute / $memory_length) : 0;
-        $redistribute_amount = array_fill(0, $memory_length, (int) $redistribute_to_all);
-        $redistribute_to_some = $redistribute%$memory_length;
-
-        var_dump($redistribute_amount);
-        var_dump($redistribute_to_some);
-
-        $i++; //begin with next
-        while ($redistribute_to_some > 0) {
-            if ($i >= $memory_length) {
-                $i = 0;
-            }
-
-            $redistribute_amount[$i]++;
+        // redistribute to all + redistribute to some
+        $input[$i] += $redistribution[$i];
+        $redistribution[$i] = 0;
+        if($redistribute_to_some > 0) {
+            $input[$i] += 1;
             $redistribute_to_some--;
-            $i++;
         }
 
-        foreach ($redistribute_amount as $key => $number) {
-            $memory_bank[$key]+= (int) $number;
+        if($i+1 >= $length) {
+            $i = -1;
         }
-
     }
 
-    return $states;
+    $state = implode('', $input);
+
+    if(!key_exists($state, $states_count)) {
+        $states_count[$state] = 1;
+    } else {
+        $states_count[$state]++;
+        $the_state = $input;
+        break;
+    }
 }
 
-function findStates2($memory_bank, $needle, &$needle_count)
-{
-    $states = [];
-    $memory_length = count($memory_bank);
+Logger::outputLine("solution", count($states_count) + 1);
 
-    var_dump($memory_bank);
+$input = $the_state;
+$state = implode('', $input);
+$states_count = [$state => 1];
+while(true) {
+    $max = max($input);
+    $max_location = array_search($max, $input);
+    $input[$max_location] = 0;
 
-    while ($needle_count<2) {
-        $state = implode("", $memory_bank);
-        $states[] = $state;
+    $redistribute_to_some = $max%$length;
+    $redistribute_to_all = floor($max/$length);
 
-        if($state == $needle) {
-            $needle_count++;
-            Logger::outputLine('counting needles', $needle_count);
+    $redistribution = array_fill(0,$length,$redistribute_to_all);
 
-            if($needle_count > 1) {
-                var_dump($states);
-                return $states;
-            }
+    $i = $max_location >= $length - 1 ? 0 : ($max_location + 1);
+    for(; $i < $length; $i++) {
+        if($redistribution[$i] <= 0 && $redistribute_to_some <=0) {
+            break;
         }
 
-//        $i = array_search(max($memory_bank), $memory_bank);
-//        $redistribute = $memory_bank[$i];
-//        $memory_bank[$i] = 0;
-//
-//        var_dump($redistribute);
-//
-//        $i++; //begin with next
-//        while ($redistribute > 0) {
-//            if ($i > $memory_length) {
-//                $i = 0;
-//            }
-//
-//            $memory_bank[$i]++;
-//            $redistribute--;
-//            $i++;
-//        }
-
-        $i = array_search(max($memory_bank), $memory_bank);
-        var_dump($i);
-        $redistribute = $memory_bank[$i];
-        $memory_bank[$i] = 0;
-
-        $redistribute_to_all = $redistribute / $memory_length >= 1 ? round($redistribute / $memory_length) : 0;
-        $redistribute_amount = array_fill(0, $memory_length, (int) $redistribute_to_all);
-        $redistribute_to_some = $redistribute%$memory_length;
-
-        var_dump($redistribute_amount);
-        var_dump($redistribute_to_some);
-
-        $i++; //begin with next
-        while ($redistribute_to_some > 0) {
-            if ($i >= $memory_length) {
-                $i = 0;
-            }
-
-            $redistribute_amount[$i]++;
+        // redistribute to all + redistribute to some
+        $input[$i] += $redistribution[$i];
+        $redistribution[$i] = 0;
+        if($redistribute_to_some > 0) {
+            $input[$i] += 1;
             $redistribute_to_some--;
-            $i++;
         }
 
-        foreach ($redistribute_amount as $key => $number) {
-            $memory_bank[$key]+= (int) $number;
+        if($i+1 >= $length) {
+            $i = -1;
         }
-
     }
 
-    return $states;
+    $state = implode('', $input);
+
+    if(!key_exists($state, $states_count)) {
+        $states_count[$state] = 1;
+    } else {
+        $states_count[$state]++;
+        break;
+    }
 }
 
-//$first_test = [0, 2, 7 , 0];
-//$first_test = [2, 4, 1, 2];
-//$needle_count = 2;
-//$states_test = findStates1($first_test, $needle_count);
-//Logger::outputLine('number of occurencies test', count($states_test) - 1);
-//echo "<hr>";
-//
-//$first_solution = array_map('intval',preg_split("/\s+/", "0	5	10	0	11	14	13	4	11	8	8	7	1	4	12	11"));
-//$states_solution = findStates1($first_solution, 2);
-//Logger::outputLine('number of occurencies solution', count($states_solution) - 1);
-//
-//var_dump($states_solution[count($states_solution)-1]);
-//
-//
-
-/*$memory_bank2 = array_map('intval',str_split('2412'));
-$needle_count = 0;
-$states_test2 = findStates2($memory_bank2,"2412", $needle_count);
-Logger::outputLine('number of occurencies test', count($states_test2) - 1);
-var_dump($needle_count);*/
-
-$needle_count = 0;
-$memory_bank2 = array_map('intval',str_split("1098765431101514131112"));
-$states_solution2 = findStates2($memory_bank2,"1098765431101514131112", $needle_count);
-var_dump($states_solution2);
-Logger::outputLine('number of occurencies solution', count($states_solution2) - 1);
+Logger::outputLine("solution", count($states_count));
