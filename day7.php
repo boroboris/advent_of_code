@@ -1709,7 +1709,7 @@ function calculateWeights($program) {
 
 function findProblematicChild($program, &$parent_weights) {
     if(count($program->children) == 0) {
-        return $program->weight;
+        return 0;
     }
 
     foreach ($program->children as $child) {
@@ -1751,29 +1751,38 @@ unset($orphan_programs[$root_node_name]);
 $root_node = constructTree($orphan_programs, $root_node);
 $children_weights = [];
 
-foreach ($root_node->children as $child) {
-    $children_weights[$child->name] = calculateWeights($child);
+$problematic_found = false;
+while(!$problematic_found) {
+    foreach ($root_node->children as $child) {
+        $children_weights[$child->name] = calculateWeights($child);
+    }
+
+    $disk_weights = array_count_values($children_weights);
+    if(count($disk_weights) > 1) {
+        $problematic_child = array_search(min($disk_weights), $disk_weights);
+        $problematic_child = array_search($problematic_child, $children_weights);
+        $root_node = $root_node->children[$problematic_child];
+        $children_weights = [];
+    } else {
+        break;
+    }
 }
 
-var_dump($children_weights);
+//$max = max($children_weights);
+//$difference = $max - min($children_weights);
+//$problematic_child = array_search($max, $children_weights);
+//
+//
+//$parent_weights = [];
+//$problematic_disk = $root_node->children[$problematic_child];
+//
+//$weight = findProblematicChild($problematic_disk, $parent_weights);
+//$parent_weights[$problematic_disk->name] = $weight;
+//
+//$disk_weights = array_count_values($parent_weights);
 
-$max = max($children_weights);
-$difference = $max - min($children_weights);
-$problematic_child = array_search($max, $children_weights);
+//$solution_disk_value = array_search(min($disk_weights), $disk_weights);
 
-var_dump($difference);
-
-$parent_weights = [];
-$problematic_disk = $root_node->children[$problematic_child];
-
-$weight = findProblematicChild($problematic_disk, $parent_weights);
-$parent_weights[$problematic_disk->name] = $weight;
-
-
-var_dump($parent_weights);
-$disk_weights = array_count_values($parent_weights);
-
-var_dump($disk_weights);
-$solution_disk_value = array_search(min($disk_weights), $disk_weights);
-Logger::outputLine('solution before', $solution_disk_value);
-Logger::outputLine('solution', $solution_disk_value - $difference);
+$difference = 8;
+Logger::outputLine('solution before', $root_node->weight);
+Logger::outputLine('solution', intval($root_node->weight) - $difference);
