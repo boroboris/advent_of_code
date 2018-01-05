@@ -2,154 +2,137 @@
 
 include 'Logger.php';
 
-function swap(&$list, $first, $last)
-{
-    $temp = $list[$first];
-    $list[$first] = $list[$last];
-    $list[$last] = $temp;
-
-    return $list;
+function swap (&$list, $position1, $position2) {
+    $temp = $list[$position1];
+    $list[$position1] = $list[$position2];
+    $list[$position2] = $temp;
 }
 
-function circularListSwap(&$list, $length, $starting_position, $list_length = 255) {
-    $first = $starting_position;
-    $last = $starting_position + $length - 1;
+function reverse (&$list, $list_length, $length, $current_position) {
+    $start = $current_position;
+    $end = $current_position + $length - 1;
+    $number_of_swaps = floor($length/2);
 
-    $number_of_swaps = $length/2;
-
-    if($last > $list_length) {
-        $last = abs($last - $list_length) - 1;
-    }
-
-    if($last < 0) {
-        $last = $list_length;
-    } elseif ($last > $list_length) {
-        $last = $list_length;
-    }
-
-    if($first > $list_length) {
-        $first = 0;
-    } elseif ($first > $list_length) {
-        $first = 0;
+    if($end >= $list_length) {
+        $end = $end % $list_length;
     }
 
     while($number_of_swaps > 0) {
-        if($first > $list_length || $first < 0) {
-            Logger::outputLine('first problem', $first);
-        }
-        if($last > $list_length || $last < 0) {
-            Logger::outputLine('last problem', $last);
-        }
-        $list = swap($list, $first, $last);
+        swap($list, $start, $end);
 
-        $first++; $last--;
+        $start++;
+        $end--;
+
+        if($start >= $list_length) {
+            $start = 0;
+        }
+
+        if($end < 0) {
+            $end = $list_length - 1;
+        }
+
         $number_of_swaps--;
-
-        if($last < 0) {
-            $last = $list_length;
-        }
-
-        if($first > $list_length) {
-            $first = 0;
-        }
     }
 }
 
-function runHashRound($lengths, &$current_position, &$skip_size, $list_length, &$list)
-{
-    foreach ($lengths as $length) {
+function hashToString ($list) {
+    $hash = "";
 
-        if ($length > 1) {
-            circularListSwap($list, $length, $current_position, $list_length);
+    for($i = 0; $i < 255; $i+=16) {
+        $list_slice = array_slice($list, $i, 16);
+        $result = array_pop($list_slice);
+
+        foreach ($list_slice as $number) {
+            $result = $result ^ $number;
         }
 
-        $current_position += $length + $skip_size;
-        if ($current_position > $list_length) {
-            $current_position = abs($current_position - $list_length) - 1;
-        }
-
-        $skip_size++;
+        $hex_result = dechex($result);
+        $hash .= strlen($hex_result) < 2 ? '0'.$hex_result : $hex_result;
     }
 
-    return $list;
+    return $hash;
 }
 
-function warnIfListTooBig($list, $list_length, $skip_size)
-{
-    if (count($list) > $list_length + 1) {
-        print "list too long";
-        var_dump($skip_size);
-        var_dump($list);
-    }
-}
+//$list = range(0,4);
+//$lengths = [3,4,1,5];
+//$tests = [
+//  [2,1,0,3,4],
+//  [4,3,0,1,2],
+//  [4,3,0,1,2],
+//  [3,4,2,1,0]
+//];
+//$rounds = 1;
 
-//$current_position = 0;
-//$skip_size = 0;
-$list = range(0,255);
-//$list_length = 255;
 
-// ----- part 1 --------
 //$lengths = [199,0,255,136,174,254,227,16,51,85,1,2,22,17,7,192];
-//$list = runHashRound($lengths, $current_position, $skip_size, $list_length, $list);
-//
-//var_dump($list);
-//Logger::outputLine('solution', $list[0] * $list[1]);
 
-echo '<hr>';
+//$length_strings = [
+//    '',
+//    "AoC 2017",
+//    "1,2,3",
+//    "1,2,4"
+//];
 
-//$original_input = "199,0,255,136,174,254,227,16,51,85,1,2,22,17,7,192";
-$current_position = 0;
-$skip_size = 0;
-$original_input = "1,2,3";
-$original_chars = str_split($original_input);
+$length_tests = [
+    "a2582a3a0e66e6e86e3812dcb672a272",
+    "33efeb34ea91902bb2f59c9920caa6cd",
+    "3efbe78a8d82f29979031a4aa0b16a9d",
+    "63960835bcdc130f0b66d7ff4f6a5a8e"
+];
 
-$lengths = array_map('ord', $original_chars);
-$lengths = array_merge($lengths, [17, 31, 73, 47, 23]);
-var_dump($lengths);
-$list_length = count($list) - 1;
-$rounds = range(0,1);
+$length_strings = [
+    "199,0,255,136,174,254,227,16,51,85,1,2,22,17,7,192"
+];
 
+$lengths_ascii = [];
 
-foreach ($rounds as $round) {
-    runHashRound($lengths, $current_position, $skip_size, $list_length, $list);
-    warnIfListTooBig($list, $list_length, $skip_size);
+foreach ($length_strings as $tests) {
+    $chars = str_split($tests);
 
-    var_dump($lengths);
-//    var_dump($list);
-//    var_dump($current_position);
-//    var_dump($skip_size);
+    $chars = array_map(function($char) {
+        return ord($char);
+    }, $chars);
+
+    $lengths_ascii[] = array_merge($chars, [17,31,73,47,23]);
 }
 
-var_dump($list);
-Logger::outputLine('solution', $list[0] * $list[1]);
+foreach ($lengths_ascii as $key2 => $lengths) {
+    $rounds = 64;
+    $list = range(0,255);
+    $list_length = count($list);
+    $current_position = 0;
+    $skip_size = 0;
 
-//$list = [65, 27, 9, 1, 4, 3, 40, 50, 91, 7, 6, 0, 2, 5, 68, 22];
-$results = [];
-for($i=0; $i < 15; $i++) {
-    $list_slice = array_slice($list,$i * 16, ($i + 1) * 16);
-    $result = 0;
-    foreach ($list_slice as $slice) {
-        $result = $result ^ $slice;
+    while($rounds > 0) {
+        foreach ($lengths as $key => $length) {
+            reverse($list, $list_length, $length, $current_position);
+
+            $current_position += $length + $skip_size;
+            $skip_size++;
+
+            if($current_position >= $list_length) {
+                $current_position = $current_position % $list_length;
+            }
+
+// tests for 1
+//    if($tests[$key] === $list) {
+//        Logger::success(implode(',', $list));
+//    } else {
+//        Logger::error('should be - ' . implode(',',$tests[$key]),implode(',', $list));
+//    }
+        }
+
+        $rounds--;
     }
 
-    $results[] = $result;
-    $list = array_splice($list, 16);
-//    var_dump($list);
+    $hash = hashToString($list);
+    // tests for 2
+    if($length_tests[$key2] === $hash) {
+        Logger::success($hash);
+    } else {
+        Logger::error('should be - ' . $length_tests[$key2], $hash);
+        Logger::outputLine('length', strlen($hash));
+    }
 }
 
-$solution2 = '';
-foreach ($results as $result) {
-    $result = chr($result);
-
-//    if(trim($result) != "") {
-        $solution2 .= bin2hex($result);
-//    }
-}
-
-var_dump($solution2);
-
-// d7d205f722be177500000000000000 - nop
-
-//'33498fae27da77'
-//'33efeb34ea91902bb2f59c9920caa6cd'
-//33498f0bae0d27da77000000000000
+//Logger::outputLine('result 1', $list[0] * $list[1]);

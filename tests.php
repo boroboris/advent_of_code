@@ -1,12 +1,15 @@
 <?php
 
-$combinations = [[],[],[],[],[],[],[]];
-foreach ([3, 2, 0, 0, 4, 0, 4] as $key => $item) {
-    if($item == 0) continue;
+$hash = [65, 27, 9, 1, 4, 3, 40, 50, 91, 7, 6, 0, 2, 5, 68, 22];
+array_reverse($hash);
+$result = array_pop($hash);
 
-    for($i = 0; $i < 96; $i+=$item) {
-        $combinations[$key][] = $i;
-    }
+foreach ($hash as $number) {
+    $result = $result ^ trim($number);
 }
 
-var_dump($combinations);
+var_dump($result);
+
+var_dump(dechex(64));
+var_dump(dechex(7));
+var_dump(dechex(255));
